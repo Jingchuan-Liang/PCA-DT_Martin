@@ -1,0 +1,71 @@
+import numpy as np
+import pandas as pd
+import graphviz
+import sklearn.tree as tree
+from sklearn.decomposition import PCA
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score, precision_score
+from sklearn.preprocessing import StandardScaler
+import matplotlib.pyplot as plt
+
+file_path = 'Preprocessed_student_data.csv'
+
+# Load the CSV file with the correct delimiter
+data = pd.read_csv(file_path, encoding='utf-8')
+
+# Step 2: Preprocessing, X = data, y = label
+X = data.drop(columns=['Unemployment_rate_class', 'Output', 'Unemployment rate'])
+y = data['Unemployment_rate_class']
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.8, random_state=0)
+
+# Standardize the features
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+# Define list of n_components values
+n_components = list(range(7, 21))
+
+# Lists to store results
+accuracy_scores = []
+precision_scores = []
+
+# Loop over each n_components value
+for n in n_components:
+    # Apply PCA
+    pca = PCA(n_components=n)
+    X_train_pca = pca.fit_transform(X_train)
+    X_test_pca = pca.transform(X_test)
+
+    # Train Decision Tree
+    clf = DecisionTreeClassifier(random_state=42)
+    clf.fit(X_train_pca, y_train)
+
+    # Make predictions
+    y_pred = clf.predict(X_test_pca)
+
+    # Evaluate the model
+    accuracy = accuracy_score(y_test, y_pred)
+    precision = precision_score(y_test, y_pred, average='weighted')
+    
+    accuracy_scores.append(accuracy)
+    precision_scores.append(precision)
+
+    print(f'n_components={n}, Accuracy: {accuracy:.2f}, Precision: {precision:.2f}')
+
+# Plotting the results
+plt.figure(figsize=(10, 6))
+plt.plot(n_components, accuracy_scores, marker='o', linestyle='-', color='b', label='Accuracy')
+plt.plot(n_components, precision_scores, marker='o', linestyle='-', color='r', label='Precision')
+plt.title('Accuracy and Precision vs. n_components in PCA')
+plt.xlabel('n_components')
+plt.ylabel('Score')
+plt.xticks(n_components)
+plt.legend()
+plt.grid(True)
+plt.tight_layout()
+plt.show()
+
+# Optional: Save the plot as an image
+# plt.savefig('accuracy_precision_vs_n_components.png')

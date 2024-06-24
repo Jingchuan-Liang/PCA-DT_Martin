@@ -1,0 +1,49 @@
+import pandas as pd
+
+# Function to map qualifications to integer codes
+def map_qualification(qual):
+    if qual in [1, 9, 10, 11, 12, 13, 14, 18, 19, 20, 22, 25, 26, 27, 29, 30, 31, 33, 35, 36, 37, 38]:
+        return 1  # Low Education
+    elif qual in [2, 3, 40]:
+        return 2  # Higher Education - Bachelor's Level
+    elif qual in [4, 43]:
+        return 3  # Higher Education - Master's Level
+    elif qual in [5, 44]:
+        return 4  # Higher Education - Doctorate Level
+    else:
+        return 0  # Other
+
+# Function to map occupations to integer codes
+def map_occupation(occ):
+    if occ in [1, 2, 112, 114, 121, 122, 123, 124, 131, 132, 134, 135]:
+        return 1  # High-Skilled Professions
+    elif occ in [3, 4, 5, 141, 143, 144, 151, 152, 153, 154, 173, 175]:
+        return 2  # Mid-Skilled Professions
+    elif occ in [6, 7, 8, 9, 10, 161, 163, 171, 172, 174, 181, 182, 183, 192, 193, 194, 195]:
+        return 3  # Low-Skilled Professions
+    else:
+        return 0  # Other
+
+file_path = 'Preprocessed_student_data.csv'
+
+# Load the CSV file with the correct delimiter
+#data = pd.read_csv(file_path, delimiter=';')
+data = pd.read_csv(file_path, encoding='utf-8')
+
+# Apply mappings
+data['mother_qualification_mapped'] = data['Mother\'s qualification'].apply(map_qualification)
+data['father_qualification_mapped'] = data['Father\'s qualification'].apply(map_qualification)
+data['mother_occupation_mapped'] = data['Mother\'s occupation'].apply(map_occupation)
+data['father_occupation_mapped'] = data['Father\'s occupation'].apply(map_occupation)
+
+# Create new metrics (parents' achievement and occupation as integers)
+data['parents_achievement'] = data[['mother_qualification_mapped', 'father_qualification_mapped']].max(axis=1)
+data['parents_occupation'] = data[['mother_occupation_mapped', 'father_occupation_mapped']].max(axis=1)
+
+# Drop intermediate mapped columns if not needed
+data = data.drop(columns=['mother_qualification_mapped', 'father_qualification_mapped', 'mother_occupation_mapped', 'father_occupation_mapped'])
+
+# Save the processed DataFrame to a new CSV file if needed
+data.to_csv('processed_data_integers.csv', index=False)
+
+print(data[['Mother\'s qualification', 'Father\'s qualification', 'Mother\'s occupation', 'Father\'s occupation', 'parents_achievement', 'parents_occupation']])
